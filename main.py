@@ -24,6 +24,7 @@ def fetch_request(numbers: list[str],
     :param history: 変更履歴を取得するかどうか。0:取得しない, 1:取得する
     :return:
     """
+
     params = {
         "id": api_id,
         "number": ",".join(numbers),
@@ -42,7 +43,6 @@ def write_csv_by_xml(xml_text: str):
     """
 
     root = xml.etree.ElementTree.fromstring(xml_text)
-
     with open(result_csv, "a", encoding="utf-8", newline="") as file:
         fields = ["法人番号", "法人名"]
         writer = csv.DictWriter(file, fieldnames=fields, extrasaction="ignore")
@@ -74,6 +74,8 @@ def get_corporate_number_list():
 
 
 def remove_and_create_result_csv():
+    """取得結果ファイルを初期化する"""
+
     if result_csv.exists():
         result_csv.unlink()
     fields = ["法人番号", "法人名"]
@@ -82,11 +84,12 @@ def remove_and_create_result_csv():
         writer.writeheader()
 
 
-load_dotenv()
-api_id = os.getenv("API_ID")
+if __name__ == "__main__":
+    load_dotenv()
+    api_id = os.getenv("API_ID")
 
-remove_and_create_result_csv()
-corporate_number_list = get_corporate_number_list()
-for corp_num in corporate_number_list:
-    xml_data = fetch_request(corp_num).text
-    write_csv_by_xml(xml_data)
+    remove_and_create_result_csv()
+    corporate_number_list = get_corporate_number_list()
+    for corp_num in corporate_number_list:
+        xml_data = fetch_request(corp_num).text
+        write_csv_by_xml(xml_data)
