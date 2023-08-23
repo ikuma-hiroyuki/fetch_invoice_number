@@ -161,4 +161,4 @@ cython_debug/
 .idea/
 
 csv/result.csv
-csv/target__corporations.csv
+csv/target_corporations.csv

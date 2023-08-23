@@ -8,7 +8,7 @@ class InvoiceCSVProcessor:
 
     base_dir = Path(__file__).resolve().parent
     csv_dir = base_dir / "csv"
-    target_csv = csv_dir / "target__corporations.csv"
+    target_csv = csv_dir / "target_corporations.csv"
     result_csv = csv_dir / "result.csv"
 
     def __init__(self):
