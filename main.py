@@ -10,6 +10,7 @@ from csv_utils import InvoiceCSVProcessor
 class APIProcessor:
     """
     法人番号APIを利用して対象企業の法人番号と法人名、住所の辞書を作成するクラス
+    https://www.houjin-bangou.nta.go.jp/webapi/
     """
 
     def __init__(self, target_corporations: list[dict[str, str, str]]):
@@ -30,10 +31,7 @@ class APIProcessor:
     def _set_fetch_data(self):
         return self._fetch_corporate_dict()
 
-    def _fetch_response(self,
-                        corporate_numbers,
-                        version: int = 1,
-                        history: int = 0) -> requests.Response:
+    def _fetch_response(self, corporate_numbers, version: int = 1, history: int = 0) -> requests.Response:
         """
         APIにリクエストを発行し、レスポンスを返す
         :param version: APIのバージョン
@@ -49,7 +47,8 @@ class APIProcessor:
             "history": history
         }
         base_url = f"https://api.houjin-bangou.nta.go.jp/{version}/num"
-        return requests.get(base_url, params=params)
+        response = requests.get(base_url, params=params)
+        return response
 
     @staticmethod
     def _get_corporate_number_list(target: list[dict[str, str, str]]) -> list[str]:
@@ -72,10 +71,15 @@ class APIProcessor:
         :return: 法人番号と法人名、住所の辞書
         """
 
-        corp_dict = {}
-        for corp_num in self._target_corporations:
-            xml_data = self._fetch_response(corp_num).text
+        def parse_xml_data(xml_data: str) -> dict[str, dict[str, str]]:
+            """
+            APIから取得したxmlデータをパースし、法人番号と法人名、住所の辞書を作成して返す
+            :param xml_data: APIから取得したxmlデータ
+            :return: 法人番号と法人名、住所の辞書
+            """
+
             root = xml.etree.ElementTree.fromstring(xml_data).findall(".//corporation")
+            parse_dict = {}
             for corp in root:
                 name = corp.find("name").text
                 number = corp.find("corporateNumber").text
@@ -83,12 +87,25 @@ class APIProcessor:
                 city = corp.find("cityName").text
                 street = corp.find("streetNumber").text
                 address = f'{prefecture}{city}{street}'
-                corp_dict[number] = {"name": name, "address": address}
+                parse_dict[number] = {"name": name, "address": address}
+            return parse_dict
+
+        corp_dict = {}
+        for corp_num in self._target_corporations:
+            response = self._fetch_response(corp_num)
+            if response.status_code == 200:
+                corp_dict.update(parse_xml_data(response.text))
+            else:
+                print(f"右記の理由により、下記法人番号のリクエストに失敗しました。: {response.text}", end="")
+                print(corp_num, end="\n\n")
         return corp_dict
 
 
 if __name__ == "__main__":
     csv_processor = InvoiceCSVProcessor()
-    api_processor = APIProcessor(csv_processor.target_corporations)
-    csv_processor.write_result_csv(api_processor.fetch_data)
-    print("処理が完了しました。")
+    if csv_processor.target_corporations:
+        api_processor = APIProcessor(csv_processor.target_corporations)
+        csv_processor.write_result_csv(api_processor.fetch_data)
+        print("処理が完了しました。")
+    else:
+        print("csv/target_corporations.csvが見つかりませんでした。")
