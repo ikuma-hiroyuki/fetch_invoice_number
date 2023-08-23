@@ -4,13 +4,13 @@ import xml.etree.ElementTree
 import requests
 from dotenv import load_dotenv
 
-from utils import create_target_corporate_dict
+from utils import create_target_corporations, write_result_csv
 
 
-def fetch_request(numbers: list[str],
-                  version: int = 1,
-                  request_type: str = "12",
-                  history: int = 0) -> requests.Response:
+def fetch_response(numbers: list[str],
+                   version: int = 1,
+                   request_type: str = "12",
+                   history: int = 0) -> requests.Response:
     """
     APIにリクエストを発行し、レスポンスを返す
     :param version: APIのバージョン
@@ -25,37 +25,35 @@ def fetch_request(numbers: list[str],
         "number": ",".join(numbers),
         "type": request_type,
         "history": history
-
     }
     base_url = f"https://api.houjin-bangou.nta.go.jp/{version}/num"
     return requests.get(base_url, params=params)
 
 
-def get_corporate_number_list(target_dict) -> list[list[str]]:
+def get_corporate_number_list(target_corporations: list[dict[str, str, str]]) -> list[list[str]]:
     """
     APIリクエストで取得できるデータ数が最大10件なので、法人番号のリストを10件ずつ返す
     :return: 法人番号のリスト
     """
 
     registration_numbers = []
-    for registration_number in target_dict.keys():
-        # 登録番号からハイフンと先頭のTを除去して法人番号に変換する
-        registration_numbers.append(registration_number.replace("-", "")[1:])
+    for corporate in target_corporations:
+        registration_numbers.append(corporate["法人番号"])
         if len(registration_numbers) == 10:
             yield registration_numbers
             registration_numbers = []
     yield registration_numbers
 
 
-def fetch_corporate_dict(corp_nums: list[list[str]]) -> dict[str, dict[str, str]]:
+def fetch_corporate_dict(corp_num_list: list[list[str]]) -> dict[str, dict[str, str]]:
     """
     APIにリクエストし、法人番号と法人名、住所の辞書を作成してして返す
     :return: 法人番号と法人名、住所の辞書
     """
 
     corp_dict = {}
-    for corp_num in corp_nums:
-        xml_data = fetch_request(corp_num).text
+    for corp_num in corp_num_list:
+        xml_data = fetch_response(corp_num).text
 
         root = xml.etree.ElementTree.fromstring(xml_data).findall(".//corporation")
         for corp in root:
@@ -66,13 +64,15 @@ def fetch_corporate_dict(corp_nums: list[list[str]]) -> dict[str, dict[str, str]
     return corp_dict
 
 
+def create_result_csv():
+    target_corporations = create_target_corporations()
+    corporate_number_list = get_corporate_number_list(target_corporations)
+    fetched_data = fetch_corporate_dict(corporate_number_list)
+    write_result_csv(target_corporations, fetched_data)
+
+
 if __name__ == "__main__":
     load_dotenv()
     api_id = os.getenv("API_ID")
 
-    target_corporate_dict = create_target_corporate_dict()
-    corporate_number_list = get_corporate_number_list(target_corporate_dict)
-    result_dict = fetch_corporate_dict(corporate_number_list)
-    print(list(get_corporate_number_list(target_corporate_dict)))
-    print(result_dict)
-    print(target_corporate_dict)
+    create_result_csv()
