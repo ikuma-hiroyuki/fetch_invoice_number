@@ -9,6 +9,6 @@ https://www.houjin-bangou.nta.go.jp/webapi/
 ## 使い方
 
 1. .envにAPIキーを記載する。
-2. csv/target.csvに取得したい法人番号を記載する。(ヘッダー不要)
+2. csv/target_corporations.csvに取得したい事業者名、登録番号(Tから始まる13桁の番号)を記載する。(要ヘッダー)
 3. main.pyを実行する
-4. csv/result.csvに法人番号と法人名が出力される。
+4. csv/result.csvに登録番号、事業者名、法人番号、住所、登録有無が出力される。
