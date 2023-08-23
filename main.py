@@ -4,7 +4,7 @@ import xml.etree.ElementTree
 import requests
 from dotenv import load_dotenv
 
-from utils import create_target_corporations, write_result_csv
+from csv_utils import create_target_corporations, write_result_csv
 
 
 def fetch_response(numbers: list[str],
