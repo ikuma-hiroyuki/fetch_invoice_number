@@ -4,7 +4,7 @@ import xml.etree.ElementTree
 import requests
 from dotenv import load_dotenv
 
-from csv_utils import create_target_corporations, write_result_csv
+from csv_utils import InvoiceCSVProcessor
 
 
 def fetch_response(numbers: list[str],
@@ -65,10 +65,10 @@ def fetch_corporate_dict(corp_num_list: list[list[str]]) -> dict[str, dict[str, 
 
 
 def create_result_csv():
-    target_corporations = create_target_corporations()
-    corporate_number_list = get_corporate_number_list(target_corporations)
+    csv_processor = InvoiceCSVProcessor()
+    corporate_number_list = get_corporate_number_list(csv_processor.target_corporations)
     fetched_data = fetch_corporate_dict(corporate_number_list)
-    write_result_csv(target_corporations, fetched_data)
+    csv_processor.write_result_csv(fetched_data)
 
 
 if __name__ == "__main__":
