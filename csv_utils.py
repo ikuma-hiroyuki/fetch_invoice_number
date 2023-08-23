@@ -45,9 +45,9 @@ class InvoiceCSVProcessor:
         for corp in self.target_corporations:
             address = fetched_data.get(corp["法人番号"], {}).get("address", "")
             corp["住所"] = address
-            corp["登録有無"] = "有" if address else ""
+            corp["国税庁登録名"] = fetched_data.get(corp["法人番号"], {}).get("name", "")
 
-        fields = ["登録番号", "事業者名", "法人番号", "住所", "登録有無"]
+        fields = ["事業者名", "国税庁登録名", "登録番号", "法人番号", "住所"]
         with self.result_csv.open("w", encoding="utf-8", newline="") as file:
             writer = csv.DictWriter(file, fieldnames=fields, extrasaction="ignore")
             writer.writeheader()
