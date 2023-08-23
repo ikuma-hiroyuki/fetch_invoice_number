@@ -7,72 +7,84 @@ from dotenv import load_dotenv
 from csv_utils import InvoiceCSVProcessor
 
 
-def fetch_response(numbers: list[str],
-                   version: int = 1,
-                   request_type: str = "12",
-                   history: int = 0) -> requests.Response:
+class APIProcessor:
     """
-    APIにリクエストを発行し、レスポンスを返す
-    :param version: APIのバージョン
-    :param numbers: 法人番号のリスト (最大10件)。法人番号はハイフンなしの13桁。
-    :param request_type: 01:CSV 形式/Shift-JIS, 02:CSV 形式/Unicode, 12:XML 形式/Unicode
-    :param history: 変更履歴を取得するかどうか。0:取得しない, 1:取得する
-    :return:
+    法人番号APIを利用して対象企業の法人番号と法人名、住所の辞書を作成するクラス
     """
 
-    params = {
-        "id": api_id,
-        "number": ",".join(numbers),
-        "type": request_type,
-        "history": history
-    }
-    base_url = f"https://api.houjin-bangou.nta.go.jp/{version}/num"
-    return requests.get(base_url, params=params)
+    def __init__(self, target_corporations: list[dict[str, str, str]]):
+        """
+        対象企業のデータを渡すと、法人番号APIを利用して法人番号と法人名、住所の辞書を作成する
+        :param target_corporations: 登録番号、事業者名、法人番号の辞書を内包するリスト
+        """
 
+        load_dotenv()
+        self._api_id = os.getenv("API_ID")
+        self._target_corporations: list[list[str]] = self._get_corporate_number_list(target_corporations)
+        self._fetch_data = self._set_fetch_data()
 
-def get_corporate_number_list(target_corporations: list[dict[str, str, str]]) -> list[list[str]]:
-    """
-    APIリクエストで取得できるデータ数が最大10件なので、法人番号のリストを10件ずつ返す
-    :return: 法人番号のリスト
-    """
+    @property
+    def fetch_data(self):
+        return self._fetch_data
 
-    registration_numbers = []
-    for corporate in target_corporations:
-        registration_numbers.append(corporate["法人番号"])
-        if len(registration_numbers) == 10:
-            yield registration_numbers
-            registration_numbers = []
-    yield registration_numbers
+    def _set_fetch_data(self):
+        return self._fetch_corporate_dict()
 
+    def _fetch_response(self,
+                        corporate_numbers: list[str],
+                        version: int = 1,
+                        history: int = 0) -> requests.Response:
+        """
+        APIにリクエストを発行し、レスポンスを返す
+        :param version: APIのバージョン
+        :param corporate_numbers: 法人番号のリスト (最大10件)。法人番号はハイフンなしの13桁。
+        :param history: 変更履歴を取得するかどうか。0:取得しない, 1:取得する
+        :return: レスポンス
+        """
 
-def fetch_corporate_dict(corp_num_list: list[list[str]]) -> dict[str, dict[str, str]]:
-    """
-    APIにリクエストし、法人番号と法人名、住所の辞書を作成してして返す
-    :return: 法人番号と法人名、住所の辞書
-    """
+        params = {
+            "id": self._api_id,
+            "number": ",".join(corporate_numbers),
+            "type": 12,
+            "history": history
+        }
+        base_url = f"https://api.houjin-bangou.nta.go.jp/{version}/num"
+        return requests.get(base_url, params=params)
 
-    corp_dict = {}
-    for corp_num in corp_num_list:
-        xml_data = fetch_response(corp_num).text
+    @staticmethod
+    def _get_corporate_number_list(target: list[dict[str, str, str]]) -> list[list[str]]:
+        """
+        APIリクエストで取得できるデータ数が最大10件なので、法人番号のリストを10件ずつ返す
+        :return: 法人番号のリスト
+        """
 
-        root = xml.etree.ElementTree.fromstring(xml_data).findall(".//corporation")
-        for corp in root:
-            name = corp.find("name").text
-            number = corp.find("corporateNumber").text
-            address = f'{corp.find("prefectureName").text}{corp.find("cityName").text}{corp.find("streetNumber").text}'
-            corp_dict[number] = {"name": name, "address": address}
-    return corp_dict
+        registration_numbers = []
+        for corporate in target:
+            registration_numbers.append(corporate["法人番号"])
+            if len(registration_numbers) == 10:
+                yield registration_numbers
+                registration_numbers = []
+        yield registration_numbers
 
+    def _fetch_corporate_dict(self) -> dict[str, dict[str, str]]:
+        """
+        APIにリクエストし、法人番号と法人名、住所の辞書を作成してして返す
+        :return: 法人番号と法人名、住所の辞書
+        """
 
-def create_result_csv():
-    csv_processor = InvoiceCSVProcessor()
-    corporate_number_list = get_corporate_number_list(csv_processor.target_corporations)
-    fetched_data = fetch_corporate_dict(corporate_number_list)
-    csv_processor.write_result_csv(fetched_data)
+        corp_dict = {}
+        for corp_num in self._target_corporations:
+            xml_data = self._fetch_response(corp_num).text
+            root = xml.etree.ElementTree.fromstring(xml_data).findall(".//corporation")
+            for corp in root:
+                name = corp.find("name").text
+                number = corp.find("corporateNumber").text
+                address = f'{corp.find("prefectureName").text}{corp.find("cityName").text}{corp.find("streetNumber").text}'
+                corp_dict[number] = {"name": name, "address": address}
+        return corp_dict
 
 
 if __name__ == "__main__":
-    load_dotenv()
-    api_id = os.getenv("API_ID")
-
-    create_result_csv()
+    csv_processor = InvoiceCSVProcessor()
+    api_processor = APIProcessor(csv_processor.target_corporations)
+    csv_processor.write_result_csv(api_processor.fetch_data)
