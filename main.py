@@ -20,7 +20,7 @@ class APIProcessor:
 
         load_dotenv()
         self._api_id = os.getenv("API_ID")
-        self._target_corporations: list[list[str]] = self._get_corporate_number_list(target_corporations)
+        self._target_corporations: list[str] = self._get_corporate_number_list(target_corporations)
         self._fetch_data = self._set_fetch_data()
 
     @property
@@ -31,7 +31,7 @@ class APIProcessor:
         return self._fetch_corporate_dict()
 
     def _fetch_response(self,
-                        corporate_numbers: list[str],
+                        corporate_numbers,
                         version: int = 1,
                         history: int = 0) -> requests.Response:
         """
@@ -52,7 +52,7 @@ class APIProcessor:
         return requests.get(base_url, params=params)
 
     @staticmethod
-    def _get_corporate_number_list(target: list[dict[str, str, str]]) -> list[list[str]]:
+    def _get_corporate_number_list(target: list[dict[str, str, str]]) -> list[str]:
         """
         APIリクエストで取得できるデータ数が最大10件なので、法人番号のリストを10件ずつ返す
         :return: 法人番号のリスト
@@ -79,7 +79,10 @@ class APIProcessor:
             for corp in root:
                 name = corp.find("name").text
                 number = corp.find("corporateNumber").text
-                address = f'{corp.find("prefectureName").text}{corp.find("cityName").text}{corp.find("streetNumber").text}'
+                prefecture = corp.find("prefectureName").text
+                city = corp.find("cityName").text
+                street = corp.find("streetNumber").text
+                address = f'{prefecture}{city}{street}'
                 corp_dict[number] = {"name": name, "address": address}
         return corp_dict
 
@@ -88,3 +91,4 @@ if __name__ == "__main__":
     csv_processor = InvoiceCSVProcessor()
     api_processor = APIProcessor(csv_processor.target_corporations)
     csv_processor.write_result_csv(api_processor.fetch_data)
+    print("処理が完了しました。")
