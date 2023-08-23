@@ -20,17 +20,20 @@ class InvoiceCSVProcessor:
         :return: 登録番号、事業者名、法人番号の辞書を内包するリスト
         """
 
-        with open(self.target_csv, "r", encoding="utf-8") as file:
-            fieldnames = ["事業者名", "登録番号"]
-            reader: csv.DictReader = csv.DictReader(file, fieldnames=fieldnames)
-            next(reader)
+        try:
+            with open(self.target_csv, "r", encoding="utf-8") as file:
+                fieldnames = ["事業者名", "登録番号"]
+                reader: csv.DictReader = csv.DictReader(file, fieldnames=fieldnames)
+                next(reader)
+                target_corporations = []
+                for row in reader:
+                    target_corporations.append({
+                        "登録番号": row["登録番号"],
+                        "事業者名": row["事業者名"],
+                        "法人番号": row["登録番号"].replace("-", "")[1:]
+                    })
+        except FileNotFoundError:
             target_corporations = []
-            for row in reader:
-                target_corporations.append({
-                    "登録番号": row["登録番号"],
-                    "事業者名": row["事業者名"],
-                    "法人番号": row["登録番号"].replace("-", "")[1:]
-                })
         return target_corporations
 
     def write_result_csv(self, fetched_data: dict[str, dict[str, str]]):
