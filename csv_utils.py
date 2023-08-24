@@ -1,6 +1,5 @@
-from pathlib import Path
-
 import csv
+from pathlib import Path
 
 
 class InvoiceCSVProcessor:
@@ -8,8 +7,8 @@ class InvoiceCSVProcessor:
 
     base_dir = Path(__file__).resolve().parent
     csv_dir = base_dir / "resource"
-    target_csv = csv_dir / "target_corporations.resource"
-    result_csv = csv_dir / "result.resource"
+    target_csv = csv_dir / "target_corporations.csv"
+    result_csv = csv_dir / "result.csv"
 
     def __init__(self):
         self.target_corporations = self._create_target_corporations()
