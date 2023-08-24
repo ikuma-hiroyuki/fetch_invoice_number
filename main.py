@@ -7,8 +7,8 @@ from utils.excel_utils import InvoiceExcelProcessor
 
 
 def csv_process():
-    resource_dir = Path(file_path).resolve().parent
-    result_path = resource_dir / "result.csv"
+    parent_dir = Path(file_path).resolve().parent
+    result_path = parent_dir / "result.csv"
 
     csv_processor = InvoiceCSVProcessor(file_path, result_path)
     api_processor = APIProcessor(csv_processor.corporations)
