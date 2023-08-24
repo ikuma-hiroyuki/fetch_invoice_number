@@ -160,5 +160,5 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 .idea/
 
-csv/result.csv
-csv/target_corporations.csv
+resource/result.csv
+resource/target_corporations.csv

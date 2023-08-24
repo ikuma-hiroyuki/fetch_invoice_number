@@ -7,16 +7,16 @@ class InvoiceCSVProcessor:
     """ インボイス情報取得対象企業のcsvファイルの読み書きを行うクラス """
 
     base_dir = Path(__file__).resolve().parent
-    csv_dir = base_dir / "csv"
-    target_csv = csv_dir / "target_corporations.csv"
-    result_csv = csv_dir / "result.csv"
+    csv_dir = base_dir / "resource"
+    target_csv = csv_dir / "target_corporations.resource"
+    result_csv = csv_dir / "result.resource"
 
     def __init__(self):
         self.target_corporations = self._create_target_corporations()
 
     def _create_target_corporations(self) -> list[dict[str, str, str]]:
         """
-        csv/target.csvから登録番号、事業者名、法人番号の辞書を内包するリスト作成し返す
+        resource/target.csvから登録番号、事業者名、法人番号の辞書を内包するリスト作成し返す
         :return: 登録番号、事業者名、法人番号の辞書を内包するリスト
         """
 

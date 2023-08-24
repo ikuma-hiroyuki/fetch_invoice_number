@@ -19,7 +19,7 @@ class Columns:
 class InvoiceExcelProcessor:
     """ インボイス情報取得対象企業のExcelファイルの読み書きを行うクラス """
     base_dir = Path(__file__).resolve().parent
-    csv_dir = base_dir / "csv"
+    csv_dir = base_dir / "resource"
     target_excel = csv_dir / "sample_excel_copy.xlsx"
 
     def __init__(self):
@@ -58,7 +58,7 @@ class InvoiceExcelProcessor:
 
     def _create_target_corporations(self) -> list[dict[str, str, str]]:
         """
-        csv/target.csvから登録番号、事業者名、法人番号の辞書を内包するリスト作成し返す
+        resource/target.csvから登録番号、事業者名、法人番号の辞書を内包するリスト作成し返す
 
         A列に事業者名、B列に登録番号(Tから始まる13桁の番号)。1行目はヘッダー行。
         :return: 登録番号、事業者名、法人番号の辞書を内包するリスト
