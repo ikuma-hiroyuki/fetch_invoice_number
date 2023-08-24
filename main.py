@@ -1,9 +1,9 @@
 import argparse
 from pathlib import Path
 
-from api_utils import APIProcessor
-from csv_utils import InvoiceCSVProcessor
-from excel_utils import InvoiceExcelProcessor
+from utils.api_utils import APIProcessor
+from utils.csv_utils import InvoiceCSVProcessor
+from utils.excel_utils import InvoiceExcelProcessor
 
 
 def csv_process():
