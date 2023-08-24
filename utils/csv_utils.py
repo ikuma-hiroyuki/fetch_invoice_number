@@ -17,9 +17,7 @@ class InvoiceCSVProcessor:
         """
 
         with open(self.target_path, "r", encoding="utf-8") as file:
-            fieldnames = ["事業者名", "登録番号"]
-            reader: csv.DictReader = csv.DictReader(file, fieldnames=fieldnames)
-            next(reader)
+            reader: csv.DictReader = csv.DictReader(file)
             target_corporations = []
             for row in reader:
                 target_corporations.append({
