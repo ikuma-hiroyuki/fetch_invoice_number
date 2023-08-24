@@ -1,3 +1,4 @@
+import argparse
 from pathlib import Path
 
 from api_utils import APIProcessor
@@ -6,34 +7,39 @@ from excel_utils import InvoiceExcelProcessor
 
 
 def csv_process():
-    resource_dir = Path(__file__).resolve().parent / "resource"
-    target_path = resource_dir / "target_corporations.csv"
+    resource_dir = Path(file_path).resolve().parent
     result_path = resource_dir / "result.csv"
 
-    csv_processor = InvoiceCSVProcessor(target_path, result_path)
-    if csv_processor.corporations:
-        api_processor = APIProcessor(csv_processor.corporations)
-        csv_processor.write_result_csv(api_processor.fetch_data)
-        print("処理が完了しました。")
-    else:
-        print(f"{csv_processor.target_path}が見つかりませんでした。")
+    csv_processor = InvoiceCSVProcessor(file_path, result_path)
+    api_processor = APIProcessor(csv_processor.corporations)
+    csv_processor.write_result_csv(api_processor.fetch_data)
+    print("処理が完了しました。")
 
 
 def excel_process():
-    resource_dir = Path(__file__).resolve().parent / "resource"
-    excel_path = resource_dir / "sample_excel.xlsx"
-
-    excel_processor = InvoiceExcelProcessor(excel_path)
-    if excel_processor.target_corporations:
-        if not excel_processor.is_open_output_excel():
-            api_processor = APIProcessor(excel_processor.target_corporations)
-            excel_processor.write_result_excel(api_processor.fetch_data)
-            print("処理が完了しました。")
-        else:
-            print("Excelファイルを閉じてから再度実行してください。")
+    excel_processor = InvoiceExcelProcessor(file_path)
+    if not excel_processor.is_open_output_excel():
+        api_processor = APIProcessor(excel_processor.target_corporations)
+        excel_processor.write_result_excel(api_processor.fetch_data)
+        print("処理が完了しました。")
     else:
-        print(f"{excel_processor.path}が見つかりませんでした。")
+        print("Excelファイルを閉じてから再度実行してください。")
 
 
 if __name__ == "__main__":
-    excel_process()
+    parser = argparse.ArgumentParser(description="インボイス登録番号を基に国税庁Web-APIで法人名と住所を取得する。")
+    parser.add_argument("file_path", type=str,
+                        help="登録番号が記載されたファイルのパス(csvまたはExcelファイル)"
+                             "(CSVファイルの場合、同ディレクトリにresult.csvが出力されます。)")
+    args = parser.parse_args()
+
+    file_path = Path(args.file_path)
+    if file_path.exists():
+        if file_path.suffix == ".csv":
+            csv_process()
+        elif file_path.suffix in [".xlsx", ".xlsm"]:
+            excel_process()
+        else:
+            print("csvまたはExcelファイルを指定してください。")
+    else:
+        print(f"{file_path}が見つかりませんでした。")

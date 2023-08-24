@@ -65,20 +65,17 @@ class InvoiceExcelProcessor:
         :return: 登録番号、事業者名、法人番号の辞書を内包するリスト
         """
 
-        try:
-            wb = openpyxl.load_workbook(self.path)
-            ws = wb["登録番号"]
-            target_corporations = []
-            for row_num, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
-                invoice_number = ws.cell(row_num, Columns.invoice_number).value
-                target_corporations.append({
-                    "登録番号": invoice_number,
-                    "事業者名": ws.cell(row_num, Columns.corporate_name).value,
-                    "法人番号": self.generate_corporate_number(invoice_number)
-                })
-            wb.close()
-        except FileNotFoundError:
-            target_corporations = []
+        wb = openpyxl.load_workbook(self.path)
+        ws = wb["登録番号"]
+        target_corporations = []
+        for row_num, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+            invoice_number = ws.cell(row_num, Columns.invoice_number).value
+            target_corporations.append({
+                "登録番号": invoice_number,
+                "事業者名": ws.cell(row_num, Columns.corporate_name).value,
+                "法人番号": self.generate_corporate_number(invoice_number)
+            })
+        wb.close()
         return target_corporations
 
     def write_result_excel(self, fetched_data: dict[str, dict[str, str]]):
