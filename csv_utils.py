@@ -5,13 +5,10 @@ from pathlib import Path
 class InvoiceCSVProcessor:
     """ インボイス情報取得対象企業のcsvファイルの読み書きを行うクラス """
 
-    base_dir = Path(__file__).resolve().parent
-    csv_dir = base_dir / "resource"
-    target_csv = csv_dir / "target_corporations.csv"
-    result_csv = csv_dir / "result.csv"
-
-    def __init__(self):
-        self.target_corporations = self._create_target_corporations()
+    def __init__(self, target_path: Path, result_path: Path):
+        self.target_path = target_path
+        self.result_path = result_path
+        self.corporations = self._create_target_corporations()
 
     def _create_target_corporations(self) -> list[dict[str, str, str]]:
         """
@@ -20,7 +17,7 @@ class InvoiceCSVProcessor:
         """
 
         try:
-            with open(self.target_csv, "r", encoding="utf-8") as file:
+            with open(self.target_path, "r", encoding="utf-8") as file:
                 fieldnames = ["事業者名", "登録番号"]
                 reader: csv.DictReader = csv.DictReader(file, fieldnames=fieldnames)
                 next(reader)
@@ -41,13 +38,13 @@ class InvoiceCSVProcessor:
         :param fetched_data: APIから取得した法人番号と法人名、住所の辞書
         """
 
-        for corp in self.target_corporations:
+        for corp in self.corporations:
             address = fetched_data.get(corp["法人番号"], {}).get("address", "")
             corp["住所"] = address
             corp["国税庁登録名"] = fetched_data.get(corp["法人番号"], {}).get("name", "")
 
         fields = ["事業者名", "国税庁登録名", "登録番号", "法人番号", "住所"]
-        with self.result_csv.open("w", encoding="utf-8", newline="") as file:
+        with self.result_path.open("w", encoding="utf-8", newline="") as file:
             writer = csv.DictWriter(file, fieldnames=fields, extrasaction="ignore")
             writer.writeheader()
-            writer.writerows(self.target_corporations)
+            writer.writerows(self.corporations)

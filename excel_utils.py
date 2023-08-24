@@ -18,31 +18,32 @@ class Columns:
 
 class InvoiceExcelProcessor:
     """ インボイス情報取得対象企業のExcelファイルの読み書きを行うクラス """
-    base_dir = Path(__file__).resolve().parent
-    csv_dir = base_dir / "resource"
-    target_excel = csv_dir / "sample_excel_copy.xlsx"
 
-    def __init__(self):
+    def __init__(self, path: Path):
+        """
+        :param path: pathlib.Path
+        """
+        self.path = path
         self.target_corporations = self._create_target_corporations()
 
-    @classmethod
-    def is_open_output_excel(cls) -> bool:
+    def is_open_output_excel(self) -> bool:
         """
         excel_pathが開かれているかどうかを返す
         :return: excel_pathが開かれているかどうか
         """
+
         if os.name == "nt":
             # Windows
             try:
-                with cls.target_excel.open("r+b"):
+                with self.path.open("r+b"):
                     pass
                 return False
             except IOError:
                 return True
         elif os.name == "posix":
             # Unix
-            if cls.target_excel.exists():
-                result = subprocess.run(["lsof", str(cls.target_excel)], stdout=subprocess.PIPE)
+            if self.path.exists():
+                result = subprocess.run(["lsof", str(self.path)], stdout=subprocess.PIPE)
                 return bool(result.stdout)
             else:
                 return False
@@ -65,7 +66,7 @@ class InvoiceExcelProcessor:
         """
 
         try:
-            wb = openpyxl.load_workbook(self.target_excel)
+            wb = openpyxl.load_workbook(self.path)
             ws = wb["登録番号"]
             target_corporations = []
             for row_num, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
@@ -86,7 +87,7 @@ class InvoiceExcelProcessor:
         :param fetched_data: APIから取得した法人番号と法人名、住所の辞書
         """
 
-        wb = openpyxl.load_workbook(self.target_excel)
+        wb = openpyxl.load_workbook(self.path)
         ws = wb["登録番号"]
         for row_num, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
             corporate_number = self.generate_corporate_number(ws.cell(row_num, Columns.invoice_number).value)
@@ -97,5 +98,5 @@ class InvoiceExcelProcessor:
             ws.cell(row_num, Columns.address).value = address
             ws.cell(row_num, Columns.tax_agency_registered_name).value = registered_name
 
-        wb.save(self.target_excel)
+        wb.save(self.path)
         wb.close()
