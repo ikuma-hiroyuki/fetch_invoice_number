@@ -5,6 +5,7 @@ import requests
 from dotenv import load_dotenv
 
 from csv_utils import InvoiceCSVProcessor
+from excel_utils import InvoiceExcelProcessor
 
 
 class APIProcessor:
@@ -102,10 +103,13 @@ class APIProcessor:
 
 
 if __name__ == "__main__":
-    csv_processor = InvoiceCSVProcessor()
-    if csv_processor.target_corporations:
-        api_processor = APIProcessor(csv_processor.target_corporations)
-        csv_processor.write_result_csv(api_processor.fetch_data)
-        print("処理が完了しました。")
+    excel_processor = InvoiceExcelProcessor()
+    if not excel_processor.is_open_output_excel():
+        if excel_processor.target_corporations:
+            api_processor = APIProcessor(excel_processor.target_corporations)
+            excel_processor.write_result_excel(api_processor.fetch_data)
+            print("処理が完了しました。")
+        else:
+            print(f"{excel_processor.target_excel}が見つかりませんでした。")
     else:
-        print("csv/target_corporations.csvが見つかりませんでした。")
+        print("Excelファイルを閉じてから再度実行してください。")
